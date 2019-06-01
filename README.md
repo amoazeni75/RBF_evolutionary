@@ -1,2 +1,1 @@
-# RBF_Evolutionary_training
-in this project we train a Radial Basis Function Network with the help of ES algorithm 
+<h1>Training Radial Basis Function Network by Evolutionary Strategy</h1>
