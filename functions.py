@@ -105,3 +105,38 @@ def do_mutation(generation, dimension_size):
         generation[i][-1] = generation[i][-1] * math.exp(-(1 / math.sqrt(dimension_size) * random.normal(0, 1)))
         for j in range(len(generation[i]) - 1):
             generation[i][j] = generation[i][j] + generation[i][-1] * random.normal(0, 1)
+
+
+def recombination_chromosomes(generation):
+    childes = []
+    for i in range(len(generation)):
+        chromosome1 = generation[i]
+        for j in range(i + 1, len(generation)):
+            chromosome2 = generation[j]
+            # if random.uniform(0, 1) <= 0.4:
+            childes.append(do_recombination(chromosome1, chromosome2))
+
+    return childes
+
+
+def do_recombination(ch1, ch2):
+
+    if len(ch1) <= len(ch2):
+        lower_length = ch1
+        higher_length = ch2
+    else:
+        lower_length = ch2
+        higher_length = ch1
+
+    new_child = []
+    for i in range(len(lower_length)):
+        new_child.append((higher_length[i] + lower_length[i]) / 2.0)
+
+    for i in range(len(lower_length), len(higher_length)):
+        new_child.append(higher_length[i])
+
+    return new_child
+
+
+def evaluate_generation(generation, running_mode):
+    return []

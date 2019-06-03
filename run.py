@@ -65,4 +65,7 @@ for i in range(iteration_steps):
     functions.do_mutation(parents, data_dimension)
 
     # recombination
-    
+    childes = functions.recombination_chromosomes(parents)
+
+    # evaluate parents and childes
+    evaluated = functions.evaluate_generation(parents + childes, algorithm_mode)
