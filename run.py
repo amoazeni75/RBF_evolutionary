@@ -21,6 +21,7 @@ max_length_chromosome = -1              # maximum number of basis in  each chrom
 max_sigma_mutation = -1                 # upper bound for sigma that using in mutation
 initial_number_chromosomes = -1         # number of initial generation
 dataset_length = 0                      # number of data in dataset
+data_dimension = 0
 algorithm_mode = 'Classification_2'
 # indicate running mode of Algorithm {Classification_2, Classification_n, Regression}
 
@@ -34,7 +35,7 @@ args.reg_thr = float(args.reg_thr)
 dataset_train = pd.read_excel(args.input)
 training_set = dataset_train.iloc[:, 0:dataset_train.shape[1]].values
 dataset_length = dataset_train.shape[0]
-
+data_dimension = dataset_train.shape[1] - 1
 
 # initialization of parameters
 algorithm_mode, \
@@ -48,10 +49,19 @@ initial_number_chromosomes= functions.initialization_parameter(data_set=dataset_
                                                                ratio_max_sigma=args.cmaxs,
                                                                ratio_initial_number_chromosomes=args.init_ch_nu)
 
-# generate initial generation
-initial_generation = functions.create_initial_generation(data_set=dataset_train,
+# producing initial generation
+generation = functions.create_initial_generation(data_set=dataset_train,
                                                          min_length_chromosome=min_length_chromosome,
                                                          max_length_chromosome=max_length_chromosome,
                                                          generation_size=initial_number_chromosomes,
                                                          max_sigma=max_sigma_mutation)
-print(initial_generation)
+
+iteration_steps = 1100
+for i in range(iteration_steps):
+    # selecting parents
+    parents = functions.selecting_parents_random_uniform(generation)
+
+    # mutation
+    functions.do_mutation(parents, data_dimension)
+
+    # recombination
