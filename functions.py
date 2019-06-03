@@ -10,20 +10,18 @@ def create_initial_generation(data_set, min_length_chromosome, max_length_chromo
     # create list of sigma values with the size of generation_size
     makhraj = (data_set.shape[0] * (data_set.shape[1] - 1)) ** (1 / float(data_set.shape[1] - 1))
     radial = get_farthest_distance(data_set) / makhraj
-    # sigma_values = random.normal(farthest_dis, farthest_dis * 0.2)
+    sigma_values = random.uniform(0.1 * (max_range - min_range), 0.3 * (max_range - min_range), generation_size)
 
     for i in range(generation_size):
         current_chromosome = []
-        sigma_values = random.normal(radial, radial * 0.5, chromosomes_length[i])
+        radius_values = random.normal(radial, radial * 0.5, chromosomes_length[i])
         # b_values = random.uniform((max_range - min_range) * 0.2, (max_range - min_range) * 0.8, chromosomes_length[i])
         for j in range(chromosomes_length[i]):
             for k in range(1, data_set.shape[1]):
                 current_chromosome.append(random.uniform(data_set[k].min(), data_set[k].max()))
-            current_chromosome.append(sigma_values[j])
-            # current_chromosome.append(a_values[j])
-            # current_chromosome.append(b_values[j])
+            current_chromosome.append(radius_values[j])
 
-        # current_chromosome.append(sigma_values[i])
+        current_chromosome.append(sigma_values[i])
         initial_chromosomes.append(current_chromosome)
 
     return initial_chromosomes
@@ -86,11 +84,11 @@ def get_farthest_distance(dataset):
 def get_distance(p1, p2):
     p1 = p1.values
     p2 = p2.values
-    sumNum = 0
+    sum_num = 0
     for i in range(p1.shape[1]):
-        sumNum += (p1[0][i] - p2[0][i]) ** 2
-    sumNum = math.sqrt(sumNum)
-    return sumNum
+        sum_num += (p1[0][i] - p2[0][i]) ** 2
+    sum_num = math.sqrt(sum_num)
+    return sum_num
 
 
 def selecting_parents_random_uniform(seed):
@@ -100,7 +98,10 @@ def selecting_parents_random_uniform(seed):
 def do_mutation(generation, dimension_size):
     # first we must mutate sigma and then each gene
     for i in range(len(generation)):
-        for j in range(dimension_size, len(generation[i]), 3):
-            generation[i][j] = generation[i][j] * math.exp(-(1 / math.sqrt(dimension_size) * random.normal(0, 1)))
-            for k in range(j - dimension_size, j):
-                generation[i][k] = generation[i][k] + generation[i][j] * random.normal(0, 1)
+        # for j in range(dimension_size, len(generation[i]) - 1, 3):
+        #     generation[i][j] = generation[i][j] * math.exp(-(1 / math.sqrt(dimension_size) * random.normal(0, 1)))
+        #     for k in range(j - dimension_size, j):
+        #         generation[i][k] = generation[i][k] + generation[i][j] * random.normal(0, 1)
+        generation[i][-1] = generation[i][-1] * math.exp(-(1 / math.sqrt(dimension_size) * random.normal(0, 1)))
+        for j in range(len(generation[i]) - 1):
+            generation[i][j] = generation[i][j] + generation[i][-1] * random.normal(0, 1)
