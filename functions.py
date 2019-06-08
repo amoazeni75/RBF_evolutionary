@@ -50,7 +50,7 @@ def initialization_parameter(data_set,
         min_length_chromosome = class_labels_size
     else:
         algorithm_mode = 'Regression'
-        min_length_chromosome = int(ratio_min_length_chromosome_reg * class_labels_size)
+        min_length_chromosome = ratio_min_length_chromosome_reg
 
     max_length_chromosome = int(data_set.shape[0] * ratio_max_length_chromosome)
 
@@ -215,7 +215,6 @@ def calculate_y_out(gi, wi):
 
 
 def fitness_regression(y_out, y_star):
-    fitness = 0
     fitness = np.transpose(y_out - y_star)
     fitness = np.dot(fitness, y_out - y_star)
     fitness /= 2
@@ -297,7 +296,9 @@ def print_algorithm_parameters(dataset_length,
                                initial_number_chromosomes,
                                min_length_chromosome,
                                max_length_chromosome,
-                               max_sigma_mutation):
+                               max_sigma_mutation,
+                               thread_number):
+    print("Thread " + str(thread_number) + " started")
     print("Dataset size : " + str(dataset_length))
     print("Initial generation size : " + str(initial_number_chromosomes))
     print("Min Length of Chromosome : " + str(min_length_chromosome))

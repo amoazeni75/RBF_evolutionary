@@ -2,7 +2,8 @@
 import pandas as pd
 import argparse
 import functions
-from sklearn.preprocessing import MinMaxScaler
+import es_core
+import matplotlib.pyplot as plt
 
 
 # running mode of Algorithm  = {Classification_2, Classification_n, Regression}
@@ -12,21 +13,43 @@ def get_argument():
     parser = argparse.ArgumentParser(
         description='This Programme try to train an RBF Network with the help of ES Algorithm')
 
-    parser.add_argument('--input', help='Path of input data', default="simple_set1.xlsx")
-    parser.add_argument('--cminlcr', help='Minimum Ratio of Chromosome Length in Regression', default="0.2")
-    parser.add_argument('--cmaxlcr', help='Maximum Ratio of Chromosome Length', default="0.2")
-    parser.add_argument('--init_ch_nu', help='Initial Ratio of Generation', default="0.4")
-    parser.add_argument('--cmaxs', help='Maximum Ratio of Sigma', default="0.1")
-    parser.add_argument('--reg_thr', help='threshold that indicate running mode', default="0.4")
-    parser.add_argument('--q', help='threshold that indicate running mode', default="3")
+    parser.add_argument('--input',
+                        help='Path of input data',
+                        default="regression_test_sin_2_ud.xlsx")
+    parser.add_argument('--cminlcr',
+                        help='Minimum Number of Chromosome Length in Regression',
+                        default="6")
+    parser.add_argument('--cmaxlcr',
+                        help='Maximum Ratio of Chromosome Length',
+                        default="0.2")
+    parser.add_argument('--init_ch_nu',
+                        help='Initial Ratio of Generation',
+                        default="0.3")
+    parser.add_argument('--cmaxs',
+                        help='Maximum Ratio of Sigma',
+                        default="0.1")
+    parser.add_argument('--reg_thr',
+                        help='threshold that indicate running mode',
+                        default="0.4")
+    parser.add_argument('--q',
+                        help='q in q-tornument',
+                        default="3")
+    parser.add_argument('--threads',
+                        help='number of running threads',
+                        default="10")
+    parser.add_argument('--iterations',
+                        help='number of iterations in ES',
+                        default="30")
 
     args = parser.parse_args()
-    args.cminlcr = float(args.cminlcr)
+    args.cminlcr = int(args.cminlcr)
     args.cmaxlcr = float(args.cmaxlcr)
     args.init_ch_nu = float(args.init_ch_nu)
     args.cmaxs = float(args.cmaxs)
     args.reg_thr = float(args.reg_thr)
     args.q = float(args.q)
+    args.threads = int(args.threads)
+    args.iterations = int(args.iterations)
 
     return args
 
@@ -42,63 +65,12 @@ def get_dataset(address):
     return dataset_train, dataset_train_values, dataset_length, data_dimension, y_star
 
 
-def evolutionary_strategy_core(dataset_train, dataset_train_values, dataset_length, data_dimension,
-                               y_star, normal_data, algorithm_mode, min_length_chromosome,
-                               max_length_chromosome, max_sigma_mutation, initial_number_chromosomes,
-                               iteration_steps, q, all_result):
-    # Print Information
-    functions.print_algorithm_parameters(dataset_length,
-                                         initial_number_chromosomes,
-                                         min_length_chromosome,
-                                         max_length_chromosome,
-                                         max_sigma_mutation)
-    # normalizing data
-    if normal_data:
-        sc = MinMaxScaler(feature_range=(0, 1))
-        dataset_train_values = sc.fit_transform(dataset_train_values)
-        dataset_train = sc.fit_transform(dataset_train)
-
-    # producing initial generation
-    generation = functions.create_initial_generation(data_set=dataset_train_values,
-                                                     min_length_chromosome=min_length_chromosome,
-                                                     max_length_chromosome=max_length_chromosome,
-                                                     generation_size=initial_number_chromosomes,
-                                                     max_sigma=max_sigma_mutation,
-                                                     data_set_raw=dataset_train)
-
-    for i in range(iteration_steps):
-        # selecting parents
-        parents = functions.selecting_parents_random_uniform(generation)
-
-        print("parent selected in " + str(i))
-        # mutation
-        functions.do_mutation(parents, data_dimension)
-
-        # recombination
-        childes = functions.recombination_chromosomes(parents)
-
-        # evaluate parents and childes
-        evaluated = functions.evaluate_generation(dataset_train_values, parents + childes, y_star, algorithm_mode)
-
-        # selection for next iteration
-        del generation
-        del childes
-        del parents
-        generation = functions.select_based_on_q_tournament(evaluated, q, initial_number_chromosomes)
-        print("iteration " + str(i) + " completed")
-
-    # select best chromosome
-    y_result = functions.get_final_result(dataset_train_values, generation, y_star, algorithm_mode)
-    all_result.append(y_result)
-
-
 def main():
     # get parameters from user
     args = get_argument()
 
     # reading data from file with excel format
     dataset_train, dataset_train_values, dataset_length, data_dimension, y_star = get_dataset(args.input)
-
 
     # initialization of parameters
     algorithm_mode, \
@@ -114,13 +86,21 @@ def main():
 
     all_result = []
     normal_data = False
-    iteration_steps = 20
+    my_threads = []
 
-    for i in range(5):
-        evolutionary_strategy_core(dataset_train, dataset_train_values, dataset_length, data_dimension,
-                                   y_star, normal_data, algorithm_mode, min_length_chromosome,
-                                   max_length_chromosome, max_sigma_mutation, initial_number_chromosomes,
-                                   iteration_steps, args.q, all_result)
+    if algorithm_mode == "Regression":
+        args.threads = 1
+
+    # starting threads
+    for i in range(args.threads):
+        th_i = es_core.es_thread(dataset_train, dataset_train_values, dataset_length, data_dimension,
+                                 y_star, normal_data, algorithm_mode, min_length_chromosome,
+                                 max_length_chromosome, max_sigma_mutation, initial_number_chromosomes,
+                                 args.iterations, args.q, all_result, i + 1)
+        th_i.start()
+        my_threads.append(th_i)
+    for i in range(args.threads):
+        my_threads[i].join()
 
     best_res = all_result[0][0]
     best_res_fit = all_result[0][1]
@@ -128,8 +108,21 @@ def main():
         if all_result[i][1] > best_res_fit:
             best_res_fit = all_result[i][1]
             best_res = all_result[i][0]
+
+    print("######################### Result Report")
+    print("Matrix Y :")
     print(best_res)
-    print("fitness : " + str(best_res_fit))
+    print("#########################")
+    print("The program was implemented in " + algorithm_mode + " mode")
+
+    if algorithm_mode == "Classification_2" or algorithm_mode == "Classification_n":
+        print("best fitness : " + str(best_res_fit))
+        print("Learning Error : " + str((1 - best_res_fit) * 100))
+    elif algorithm_mode == "Regression":
+        plt.plot(dataset_train_values, best_res)
+        plt.ylabel('Y')
+        plt.show()
+        print("Learning Error : " + str((1 / best_res_fit) * 100))
 
 
 if __name__ == '__main__':
