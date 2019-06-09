@@ -4,7 +4,7 @@ import argparse
 import functions
 import es_core
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 # running mode of Algorithm  = {Classification_2, Classification_n, Regression}
 
@@ -21,10 +21,10 @@ def get_argument():
                         default="6")
     parser.add_argument('--cmaxlcr',
                         help='Maximum Ratio of Chromosome Length',
-                        default="0.25")
+                        default="0.2")
     parser.add_argument('--init_ch_nu',
                         help='Initial Ratio of Generation',
-                        default="0.35")
+                        default="0.25")
     parser.add_argument('--cmaxs',
                         help='Maximum Ratio of Sigma',
                         default="0.1")
@@ -135,13 +135,13 @@ def main():
         print("Learning Error : " + str((1 / best_res_fit) * 100))
 
     print("best chromosome with highest fitness :")
-    print(best_res[2])
+    print(np.array(best_res[2]).reshape(len(best_res[2]), 1))
 
-    print("best chromosome with highest fitness :")
+    print("weights:")
     print(best_res[3])
 
-    print("best chromosome with highest fitness :")
-    print(best_res[4])
+    print("G Matrix :")
+    print(np.array(best_res[4]).reshape(len(best_res[4]), len(best_res[4][0])))
 
 
 if __name__ == '__main__':

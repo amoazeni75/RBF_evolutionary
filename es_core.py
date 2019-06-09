@@ -63,7 +63,7 @@ class es_thread(threading.Thread):
             # selecting parents
             parents = functions.selecting_parents_random_uniform(generation)
 
-            print("parent selected in " + str(i) + " Thread : " + str(self.thread_number))
+            #print("parent selected in " + str(i) + " Thread : " + str(self.thread_number))
             # mutation
             functions.do_mutation(parents, self.data_dimension)
 
@@ -71,19 +71,27 @@ class es_thread(threading.Thread):
             childes = functions.recombination_chromosomes(parents)
 
             # evaluate parents and childes
-            evaluated = functions.evaluate_generation(self.dataset_train_values,
-                                                      parents + childes,
-                                                      self.y_star,
-                                                      self.algorithm_mode)
+            # evaluated, t1, t2, t3 = functions.evaluate_generation(self.dataset_train_values,
+            #                                                       parents + childes,
+            #                                                       self.y_star,
+            #                                                       self.algorithm_mode)
 
             # selection for next iteration
-            del generation
-            del childes
-            del parents
-            generation = functions.select_based_on_q_tournament(evaluated,
-                                                                self.q,
-                                                                self.initial_number_chromosomes)
-            print("iteration " + str(i) + " completed" + " Thread : " + str(self.thread_number))
+            # del generation
+            # del childes
+            # # del parents
+            # generation = functions.select_and_evaluate(evaluated,
+            #                                                     self.q,
+            #                                                     self.initial_number_chromosomes)
+
+            generation = functions.select_and_evaluate(parents + childes,
+                                                       self.q,
+                                                       self.initial_number_chromosomes,
+                                                       self.dataset_train_values,
+                                                       self.y_star,
+                                                       self.algorithm_mode)
+
+            print("iteration " + str(i + 1) + " completed" + " Thread # : " + str(self.thread_number))
 
         # select best chromosome
         y_result = functions.get_final_result(self.dataset_train_values,

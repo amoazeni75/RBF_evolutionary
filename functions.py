@@ -266,6 +266,44 @@ def select_based_on_q_tournament(generation, q, selection_size):
     return selected_chromosome
 
 
+def select_and_evaluate(generation, q, selection_size, dataset_train_values, y_star, algorithm_mode):
+    selected_chromosome = []
+    q = int(q)
+
+    no_need_return_back_selected = False
+    if len(generation) > selection_size:
+        no_need_return_back_selected = True
+
+    for i in range(selection_size):
+        q_selected = nd.sample(range(0, len(generation)), q)
+
+        selected_to_going_evaluate = []
+
+        for j in range(len(q_selected)):
+            selected_to_going_evaluate.append(generation[q_selected[j]])
+
+        evaluated, t1, t2, t3 = evaluate_generation(dataset_train_values,
+                                                    selected_to_going_evaluate,
+                                                    y_star,
+                                                    algorithm_mode)
+        fit_best = evaluated[0][1]
+        index_b = 0
+        best = evaluated[0]
+        for j in range(1, len(evaluated)):
+            if (evaluated[j][1] == best[1] and len(evaluated[j][0]) < len(best[0])) \
+                    or (evaluated[j][1] > best[1]):
+                fit_best = evaluated[j][1]
+                index_b = j
+                best = evaluated[j]
+
+        selected_chromosome.append(best[0])
+
+        if no_need_return_back_selected:
+            generation.pop(q_selected[index_b])
+
+    return selected_chromosome
+
+
 def get_final_result(dataset, chromosome, y_star, running_mode):
     eval, \
     list_w_matrices, \
