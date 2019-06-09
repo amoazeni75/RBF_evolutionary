@@ -179,7 +179,7 @@ def evaluate_generation(dataset, generation, y_star, running_mode):
             fitness = fitness_classification_n(list_y_matrices[i], y_star)
             list_evaluated.append([generation[i], fitness])
 
-    return list_evaluated
+    return list_evaluated, list_w_matrices, list_y_matrices, list_g_matrices
 
 
 def get_gi_of_a_data(data, chromosome, dimension_size):
@@ -267,29 +267,40 @@ def select_based_on_q_tournament(generation, q, selection_size):
 
 
 def get_final_result(dataset, chromosome, y_star, running_mode):
-    eval = evaluate_generation(dataset, chromosome, y_star, running_mode)
-    best_ch = eval[0][0]
-    best_fit = eval[0][1]
+    eval, \
+    list_w_matrices, \
+    list_y_matrices, \
+    list_g_matrices = evaluate_generation(dataset,
+                                          chromosome,
+                                          y_star,
+                                          running_mode)
+    index_best_chromosome = 0
+    # best_ch = eval[0][0]
+    best_fit_value = eval[0][1]
     for i in range(len(eval)):
-        if eval[i][1] > best_fit:
-            best_fit = eval[i][1]
-            best_ch = eval[i][0]
+        if eval[i][1] > best_fit_value:
+            best_fit_value = eval[i][1]
+            index_best_chromosome = i
 
-    chromosome = best_ch
-    # first calculate G matrix
-    dimension = dataset.shape[1]
-    g_matrix = []
-    for i in range(dataset.shape[0]):
-        data_i = dataset[i]
-        g_matrix.append(get_gi_of_a_data(data_i, chromosome, dimension))
+    # chromosome = best_ch
+    # # first calculate G matrix
+    # dimension = dataset.shape[1]
+    # g_matrix = []
+    # for i in range(dataset.shape[0]):
+    #     data_i = dataset[i]
+    #     g_matrix.append(get_gi_of_a_data(data_i, chromosome, dimension))
+    #
+    # # second calculate weights
+    # w_matrix = calculate_weight_chromosome_i(g_matrix, y_star)
+    #
+    # # third calculate Y matrix
+    # y_matrix = calculate_y_out(g_matrix, w_matrix)
 
-    # second calculate weights
-    w_matrix = calculate_weight_chromosome_i(g_matrix, y_star)
-
-    # third calculate Y matrix
-    y_matrix = calculate_y_out(g_matrix, w_matrix)
-
-    return [y_matrix, best_fit]
+    return [list_y_matrices[index_best_chromosome],
+            eval[index_best_chromosome][1],
+            eval[index_best_chromosome][0],
+            list_w_matrices[index_best_chromosome],
+            list_g_matrices[index_best_chromosome]]
 
 
 def print_algorithm_parameters(dataset_length,

@@ -21,10 +21,10 @@ def get_argument():
                         default="6")
     parser.add_argument('--cmaxlcr',
                         help='Maximum Ratio of Chromosome Length',
-                        default="0.2")
+                        default="0.25")
     parser.add_argument('--init_ch_nu',
                         help='Initial Ratio of Generation',
-                        default="0.3")
+                        default="0.35")
     parser.add_argument('--cmaxs',
                         help='Maximum Ratio of Sigma',
                         default="0.1")
@@ -93,36 +93,55 @@ def main():
 
     # starting threads
     for i in range(args.threads):
-        th_i = es_core.es_thread(dataset_train, dataset_train_values, dataset_length, data_dimension,
-                                 y_star, normal_data, algorithm_mode, min_length_chromosome,
-                                 max_length_chromosome, max_sigma_mutation, initial_number_chromosomes,
-                                 args.iterations, args.q, all_result, i + 1)
+        th_i = es_core.es_thread(dataset_train,
+                                 dataset_train_values,
+                                 dataset_length,
+                                 data_dimension,
+                                 y_star,
+                                 normal_data,
+                                 algorithm_mode,
+                                 min_length_chromosome,
+                                 max_length_chromosome,
+                                 max_sigma_mutation,
+                                 initial_number_chromosomes,
+                                 args.iterations,
+                                 args.q,
+                                 all_result,
+                                 i + 1)
         th_i.start()
         my_threads.append(th_i)
     for i in range(args.threads):
         my_threads[i].join()
 
-    best_res = all_result[0][0]
+    best_res = all_result[0]
     best_res_fit = all_result[0][1]
     for i in range(1, len(all_result)):
         if all_result[i][1] > best_res_fit:
             best_res_fit = all_result[i][1]
-            best_res = all_result[i][0]
+            best_res = all_result[i]
 
     print("######################### Result Report")
-    print("Matrix Y :")
-    print(best_res)
-    print("#########################")
-    print("The program was implemented in " + algorithm_mode + " mode")
+    # best_res[0] = y;  best_res[1] = fitness value;    best_res[2] = chromosome
+    # best_res[3] = weight;     best_res[4] = g_matrix
 
+    print("The program was implemented in " + algorithm_mode + " mode")
     if algorithm_mode == "Classification_2" or algorithm_mode == "Classification_n":
         print("best fitness : " + str(best_res_fit))
         print("Learning Error : " + str((1 - best_res_fit) * 100))
     elif algorithm_mode == "Regression":
-        plt.plot(dataset_train_values, best_res)
+        plt.plot(dataset_train_values, best_res[0])
         plt.ylabel('Y')
         plt.show()
         print("Learning Error : " + str((1 / best_res_fit) * 100))
+
+    print("best chromosome with highest fitness :")
+    print(best_res[2])
+
+    print("best chromosome with highest fitness :")
+    print(best_res[3])
+
+    print("best chromosome with highest fitness :")
+    print(best_res[4])
 
 
 if __name__ == '__main__':
