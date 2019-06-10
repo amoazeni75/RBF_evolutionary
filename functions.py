@@ -3,8 +3,12 @@ import numpy as np
 import random as nd
 
 
-def create_initial_generation(data_set, min_length_chromosome, max_length_chromosome, generation_size,
-                              max_sigma, data_set_raw):
+def create_initial_generation(data_set,
+                              min_length_chromosome,
+                              max_length_chromosome,
+                              generation_size,
+                              max_sigma,
+                              data_set_raw):
     initial_chromosomes = []
 
     # create list of chromosome length with the size of generation_size
@@ -52,7 +56,7 @@ def initialization_parameter(data_set,
         algorithm_mode = 'Regression'
         min_length_chromosome = ratio_min_length_chromosome_reg
 
-    max_length_chromosome = int(data_set.shape[0] * ratio_max_length_chromosome)
+    max_length_chromosome = ratio_max_length_chromosome
 
     max_range, min_range = get_max_min_range_dataset(data_set)
     max_sigma_mutation = (max_range - min_range) * ratio_max_sigma
@@ -225,8 +229,7 @@ def fitness_regression(y_out, y_star):
 def fitness_classification_2(y_out, y_star):
     fitness = 0
     for i in range(len(y_out)):
-        # fitness += np.abs(np.sign(y_out[i]) - y_star[i])
-        fitness += np.abs((np.sign(y_out[i]) + 1) / 2 - y_star[i])
+        fitness += np.abs(np.sign(y_out[i]) - int(y_star[i]))
     fitness = fitness / (len(y_star))
     fitness = 1 - fitness
     return fitness

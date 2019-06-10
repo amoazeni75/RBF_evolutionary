@@ -5,6 +5,9 @@ import functions
 import es_core
 import matplotlib.pyplot as plt
 import numpy as np
+from time import time
+import generate_data as gd
+
 
 # running mode of Algorithm  = {Classification_2, Classification_n, Regression}
 
@@ -13,18 +16,21 @@ def get_argument():
     parser = argparse.ArgumentParser(
         description='This Programme try to train an RBF Network with the help of ES Algorithm')
 
-    parser.add_argument('--input',
-                        help='Path of input data',
-                        default="regression_test_sin_2_ud.xlsx")
+    parser.add_argument('--train',
+                        help='Path of train data',
+                        default="cluster_2_300_train.xlsx")
+    parser.add_argument('--test',
+                        help='Path of test data',
+                        default="cluster_2_100_test.xlsx")
     parser.add_argument('--cminlcr',
-                        help='Minimum Number of Chromosome Length in Regression',
-                        default="6")
+                        help='Minimum Number of Basis',
+                        default="2")
     parser.add_argument('--cmaxlcr',
-                        help='Maximum Ratio of Chromosome Length',
-                        default="0.2")
+                        help='Maximum Number of Basis',
+                        default="4")
     parser.add_argument('--init_ch_nu',
                         help='Initial Ratio of Generation',
-                        default="0.25")
+                        default="0.3")
     parser.add_argument('--cmaxs',
                         help='Maximum Ratio of Sigma',
                         default="0.1")
@@ -36,14 +42,14 @@ def get_argument():
                         default="3")
     parser.add_argument('--threads',
                         help='number of running threads',
-                        default="10")
+                        default="1")
     parser.add_argument('--iterations',
                         help='number of iterations in ES',
-                        default="30")
+                        default="15")
 
     args = parser.parse_args()
     args.cminlcr = int(args.cminlcr)
-    args.cmaxlcr = float(args.cmaxlcr)
+    args.cmaxlcr = int(args.cmaxlcr)
     args.init_ch_nu = float(args.init_ch_nu)
     args.cmaxs = float(args.cmaxs)
     args.reg_thr = float(args.reg_thr)
@@ -54,15 +60,37 @@ def get_argument():
     return args
 
 
-def get_dataset(address):
-    dataset_train = pd.read_excel(address)
+def get_dataset(address_train, address_test):
+    dataset_train = pd.read_excel(address_train)
     dataset_train_values = dataset_train.iloc[:, 0:dataset_train.shape[1] - 1].values
     dataset_length = dataset_train_values.shape[0]
     data_dimension = dataset_train_values.shape[1]
     y_star = dataset_train.iloc[:, dataset_train.shape[1] - 1:dataset_train.shape[1]].values
     y_star = y_star.reshape(len(y_star), 1)
 
-    return dataset_train, dataset_train_values, dataset_length, data_dimension, y_star
+    dataset_test = []
+    dataset_test_values = []
+    dataset_test_length = -1
+    data_test_dimension = -1
+    y_star_test = []
+    if address_test != 'none':
+        dataset_test = pd.read_excel(address_test)
+        dataset_test_values = dataset_test.iloc[:, 0:dataset_test.shape[1] - 1].values
+        dataset_test_length = dataset_test_values.shape[0]
+        data_test_dimension = dataset_test_values.shape[1]
+        y_star_test = dataset_test.iloc[:, dataset_test.shape[1] - 1:dataset_test.shape[1]].values
+        y_star_test = y_star_test.reshape(len(y_star_test), 1)
+
+    return dataset_train, \
+           dataset_train_values, \
+           dataset_length, \
+           data_dimension, \
+           y_star, \
+           dataset_test, \
+           dataset_test_values, \
+           dataset_test_length, \
+           data_test_dimension, \
+           y_star_test
 
 
 def main():
@@ -70,9 +98,19 @@ def main():
     args = get_argument()
 
     # reading data from file with excel format
-    dataset_train, dataset_train_values, dataset_length, data_dimension, y_star = get_dataset(args.input)
+    dataset_train, \
+    dataset_train_values, \
+    dataset_length, \
+    data_dimension, \
+    y_star, \
+    dataset_test, \
+    dataset_test_values, \
+    dataset_test_length, \
+    data_test_dimension, \
+    y_star_test = get_dataset(args.train, args.test)
 
     # initialization of parameters
+
     algorithm_mode, \
     min_length_chromosome, \
     max_length_chromosome, \
@@ -88,9 +126,7 @@ def main():
     normal_data = False
     my_threads = []
 
-    if algorithm_mode == "Regression":
-        args.threads = 1
-
+    start_time = time()
     # starting threads
     for i in range(args.threads):
         th_i = es_core.es_thread(dataset_train,
@@ -113,6 +149,7 @@ def main():
     for i in range(args.threads):
         my_threads[i].join()
 
+    end_time = time()
     best_res = all_result[0]
     best_res_fit = all_result[0][1]
     for i in range(1, len(all_result)):
@@ -132,7 +169,8 @@ def main():
         plt.plot(dataset_train_values, best_res[0])
         plt.ylabel('Y')
         plt.show()
-        print("Learning Error : " + str((1 / best_res_fit) * 100))
+        plt.savefig("result.png")
+        print("Learning Error : " + str((1 / best_res_fit) * 100) + "%")
 
     print("best chromosome with highest fitness :")
     print(np.array(best_res[2]).reshape(len(best_res[2]), 1))
@@ -142,6 +180,21 @@ def main():
 
     print("G Matrix :")
     print(np.array(best_res[4]).reshape(len(best_res[4]), len(best_res[4][0])))
+
+    print("Algorithm Time : " + '%.2f' % (end_time - start_time) + "s")
+
+    print("#####################comapre result in classification")
+    if dataset_test_length != -1:
+        list_evaluated_test, \
+        list_w_matrices, \
+        list_y_matrices, \
+        list_g_matrices = functions.evaluate_generation(dataset_test_values,
+                                                        [best_res[2]],
+                                                        y_star_test,
+                                                        algorithm_mode)
+        print("Accuracy in Test Set is: " + str(list_evaluated_test[0][1] * 100))
+        print("class labels: ")
+        print(str(list_y_matrices))
 
 
 if __name__ == '__main__':
