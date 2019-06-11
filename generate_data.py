@@ -45,8 +45,8 @@ def get_sample_n_class(number_of_class):
     class_n_train = []
     class_n_test = []
     for i in range(1, number_of_class + 1):
-        create_samples_classification(20 * i, 10, 50, 2, i, class_n_train)
-        create_samples_classification(20 * i, 10, 10, 2, i, class_n_test)
+        create_samples_classification(20 * i, 5, 50, 2, i, class_n_train)
+        create_samples_classification(20 * i, 5, 10, 2, i, class_n_test)
 
     return class_n_train, class_n_test
 

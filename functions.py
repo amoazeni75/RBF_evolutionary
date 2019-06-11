@@ -61,7 +61,7 @@ def initialization_parameter(data_set,
 
     max_range, min_range = get_max_min_range_dataset(data_set)
     max_sigma_mutation = (max_range - min_range) * ratio_max_sigma
-    initial_number_chromosomes = int(ratio_initial_number_chromosomes * data_set.shape[0])
+    initial_number_chromosomes = ratio_initial_number_chromosomes
 
     return algorithm_mode, \
            min_length_chromosome, \
@@ -379,7 +379,7 @@ def draw_result_classification(y_out,
     incorrect_d_1 = []
     incorrect_d_2 = []
 
-    for i in range (len(data)):
+    for i in range(len(data)):
         if cluster_count == 2:
             if np.sign(y_out[i]) == y_star[i]:
                 correct_d_1.append(data[i][0])
@@ -397,6 +397,21 @@ def draw_result_classification(y_out,
 
     plt.plot(correct_d_1, correct_d_2, 'go', incorrect_d_1, incorrect_d_2, 'ro')
     plt.title('Accuracy: ' + str(accuracy) + '% | ' +
-              ' Dataset size: ' + str(sample_size) + ' | '
+              ' Dataset size: ' + str(sample_size) + ' | ' +
               ' Number of Clusters: ' + str(cluster_count))
+    plt.legend(('correct', 'incorrect'), loc='upper right')
+    plt.show()
+
+
+def draw_result_regression(y_out,
+                           y_star,
+                           accuracy,
+                           sample_size):
+    plt.plot(y_out, '-o', label='RBF-Net')
+    #plt.plot(y_star, '-o', label='Real')
+    plt.legend()
+    plt.title('Accuracy: ' + str(accuracy) + '% | ' +
+              ' Dataset size: ' + str(sample_size) + ' | ')
+
+    plt.tight_layout()
     plt.show()

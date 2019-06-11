@@ -18,19 +18,19 @@ def get_argument():
 
     parser.add_argument('--train',
                         help='Path of train data',
-                        default="cluster_5_250_train.xlsx")
+                        default="regdata2000.xlsx")
     parser.add_argument('--test',
                         help='Path of test data',
-                        default="cluster_5_50_test.xlsx")
+                        default="none")
     parser.add_argument('--cminlcr',
                         help='Minimum Number of Basis',
                         default="5")
     parser.add_argument('--cmaxlcr',
                         help='Maximum Number of Basis',
-                        default="10")
+                        default="15")
     parser.add_argument('--init_ch_nu',
-                        help='Initial Ratio of Generation',
-                        default="0.2")
+                        help='Initial Size of Generation',
+                        default="30")
     parser.add_argument('--cmaxs',
                         help='Maximum Ratio of Sigma',
                         default="0.1")
@@ -45,12 +45,12 @@ def get_argument():
                         default="1")
     parser.add_argument('--iterations',
                         help='number of iterations in ES',
-                        default="3")
+                        default="5")
 
     args = parser.parse_args()
     args.cminlcr = int(args.cminlcr)
     args.cmaxlcr = int(args.cmaxlcr)
-    args.init_ch_nu = float(args.init_ch_nu)
+    args.init_ch_nu = int(args.init_ch_nu)
     args.cmaxs = float(args.cmaxs)
     args.reg_thr = float(args.reg_thr)
     args.q = float(args.q)
@@ -169,12 +169,18 @@ def main():
     if algorithm_mode == "Classification_2" or algorithm_mode == "Classification_n":
         print("best fitness : " + str(best_res_fit))
         print("Learning Error : " + str((1 - best_res_fit) * 100))
+        functions.draw_result_classification(best_res[0],
+                                             y_star,
+                                             best_res_fit * 100,
+                                             dataset_length,
+                                             number_of_class,
+                                             dataset_train_values)
     elif algorithm_mode == "Regression":
-        plt.plot(dataset_train_values, best_res[0])
-        plt.ylabel('Y')
-        plt.show()
-        plt.savefig("result.png")
-        print("Learning Error : " + str((1 / best_res_fit) * 100) + "%")
+        functions.draw_result_regression(best_res[0],
+                                         y_star,
+                                         100 - ((1 / best_res_fit) * 100)[0][0],
+                                         dataset_length)
+        print("Learning Error : " + str(((1 / best_res_fit) * 100)[0][0]) + "%")
 
     print("best chromosome with highest fitness :")
     print(np.array(best_res[2]).reshape(len(best_res[2]), 1))
@@ -186,14 +192,6 @@ def main():
     print(np.array(best_res[4]).reshape(len(best_res[4]), len(best_res[4][0])))
 
     print("Algorithm Time : " + '%.2f' % (end_time - start_time) + "s")
-
-    if algorithm_mode != "Regression":
-        functions.draw_result_classification(best_res[0],
-                                             y_star,
-                                             best_res_fit * 100,
-                                             dataset_length,
-                                             number_of_class,
-                                             dataset_train_values)
 
     print("#####################comapre result in classification")
     if dataset_test_length != -1:
@@ -210,6 +208,13 @@ def main():
             for i in range(len(list_y_matrices)):
                 list_y_matrices[i] = np.round(list_y_matrices[i])
         print(str(list_y_matrices))
+
+        functions.draw_result_classification(list_y_matrices[0],
+                                             y_star_test,
+                                             list_evaluated_test[0][1] * 100,
+                                             dataset_test_length,
+                                             number_of_class,
+                                             dataset_test_values)
 
 
 if __name__ == '__main__':
