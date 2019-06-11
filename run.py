@@ -18,19 +18,19 @@ def get_argument():
 
     parser.add_argument('--train',
                         help='Path of train data',
-                        default="cluster_2_300_train.xlsx")
+                        default="cluster_5_250_train.xlsx")
     parser.add_argument('--test',
                         help='Path of test data',
-                        default="cluster_2_100_test.xlsx")
+                        default="cluster_5_50_test.xlsx")
     parser.add_argument('--cminlcr',
                         help='Minimum Number of Basis',
-                        default="2")
+                        default="5")
     parser.add_argument('--cmaxlcr',
                         help='Maximum Number of Basis',
-                        default="4")
+                        default="10")
     parser.add_argument('--init_ch_nu',
                         help='Initial Ratio of Generation',
-                        default="0.3")
+                        default="0.2")
     parser.add_argument('--cmaxs',
                         help='Maximum Ratio of Sigma',
                         default="0.1")
@@ -45,7 +45,7 @@ def get_argument():
                         default="1")
     parser.add_argument('--iterations',
                         help='number of iterations in ES',
-                        default="15")
+                        default="3")
 
     args = parser.parse_args()
     args.cminlcr = int(args.cminlcr)
@@ -115,12 +115,13 @@ def main():
     min_length_chromosome, \
     max_length_chromosome, \
     max_sigma_mutation, \
-    initial_number_chromosomes = functions.initialization_parameter(data_set=dataset_train,
-                                                                    regression_threshold=args.reg_thr,
-                                                                    ratio_min_length_chromosome_reg=args.cminlcr,
-                                                                    ratio_max_length_chromosome=args.cmaxlcr,
-                                                                    ratio_max_sigma=args.cmaxs,
-                                                                    ratio_initial_number_chromosomes=args.init_ch_nu)
+    initial_number_chromosomes, \
+    number_of_class = functions.initialization_parameter(data_set=dataset_train,
+                                                         regression_threshold=args.reg_thr,
+                                                         ratio_min_length_chromosome_reg=args.cminlcr,
+                                                         ratio_max_length_chromosome=args.cmaxlcr,
+                                                         ratio_max_sigma=args.cmaxs,
+                                                         ratio_initial_number_chromosomes=args.init_ch_nu)
 
     all_result = []
     normal_data = False
@@ -160,6 +161,9 @@ def main():
     print("######################### Result Report")
     # best_res[0] = y;  best_res[1] = fitness value;    best_res[2] = chromosome
     # best_res[3] = weight;     best_res[4] = g_matrix
+    if algorithm_mode == "Classification_n":
+        for i in range(len(best_res[0])):
+            best_res[0][i] = np.round(best_res[0][i])
 
     print("The program was implemented in " + algorithm_mode + " mode")
     if algorithm_mode == "Classification_2" or algorithm_mode == "Classification_n":
@@ -183,6 +187,14 @@ def main():
 
     print("Algorithm Time : " + '%.2f' % (end_time - start_time) + "s")
 
+    if algorithm_mode != "Regression":
+        functions.draw_result_classification(best_res[0],
+                                             y_star,
+                                             best_res_fit * 100,
+                                             dataset_length,
+                                             number_of_class,
+                                             dataset_train_values)
+
     print("#####################comapre result in classification")
     if dataset_test_length != -1:
         list_evaluated_test, \
@@ -194,6 +206,9 @@ def main():
                                                         algorithm_mode)
         print("Accuracy in Test Set is: " + str(list_evaluated_test[0][1] * 100))
         print("class labels: ")
+        if algorithm_mode == "Classification_n":
+            for i in range(len(list_y_matrices)):
+                list_y_matrices[i] = np.round(list_y_matrices[i])
         print(str(list_y_matrices))
 
 

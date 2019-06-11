@@ -41,8 +41,18 @@ def get_sample_2_class():
     return class_2_train, class_2_test
 
 
+def get_sample_n_class(number_of_class):
+    class_n_train = []
+    class_n_test = []
+    for i in range(1, number_of_class + 1):
+        create_samples_classification(20 * i, 10, 50, 2, i, class_n_train)
+        create_samples_classification(20 * i, 10, 10, 2, i, class_n_test)
+
+    return class_n_train, class_n_test
+
+
 def main():
-    c1, c2 = get_sample_2_class()
+    c1, c2 = get_sample_n_class(5)
     for i in range(len(c1)):
         print(*c1[i], sep=", ")
     print("####")

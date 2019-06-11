@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import random as nd
+import matplotlib.pyplot as plt
 
 
 def create_initial_generation(data_set,
@@ -66,7 +67,8 @@ def initialization_parameter(data_set,
            min_length_chromosome, \
            max_length_chromosome, \
            max_sigma_mutation, \
-           initial_number_chromosomes
+           initial_number_chromosomes, \
+           class_labels_size
 
 
 def get_max_min_range_dataset(data_set):
@@ -237,7 +239,12 @@ def fitness_classification_2(y_out, y_star):
 
 def fitness_classification_n(y_out, y_star):
     fitness = 0
-    # ??
+    for i in range(len(y_out)):
+        delta = np.abs(y_out[i] - int(y_star[i]))
+        if delta > 0.5:
+            fitness += 1
+    fitness = fitness / (len(y_star))
+    fitness = 1 - fitness
     return fitness
 
 
@@ -349,11 +356,47 @@ def print_algorithm_parameters(dataset_length,
                                min_length_chromosome,
                                max_length_chromosome,
                                max_sigma_mutation,
-                               thread_number):
+                               thread_number,
+                               alg_mode):
     print("Thread " + str(thread_number) + " started")
+    print("Algorithm mode: " + alg_mode)
     print("Dataset size : " + str(dataset_length))
     print("Initial generation size : " + str(initial_number_chromosomes))
     print("Min Length of Chromosome : " + str(min_length_chromosome))
     print("Max Length of Chromosome : " + str(max_length_chromosome))
     print("Max Sigma in Mutation : " + str(max_sigma_mutation))
     print("##############################")
+
+
+def draw_result_classification(y_out,
+                               y_star,
+                               accuracy,
+                               sample_size,
+                               cluster_count,
+                               data):
+    correct_d_1 = []
+    correct_d_2 = []
+    incorrect_d_1 = []
+    incorrect_d_2 = []
+
+    for i in range (len(data)):
+        if cluster_count == 2:
+            if np.sign(y_out[i]) == y_star[i]:
+                correct_d_1.append(data[i][0])
+                correct_d_2.append(data[i][1])
+            else:
+                incorrect_d_1.append(data[i][0])
+                incorrect_d_2.append(data[i][1])
+        else:
+            if np.round(y_out[i]) == y_star[i]:
+                correct_d_1.append(data[i][0])
+                correct_d_2.append(data[i][1])
+            else:
+                incorrect_d_1.append(data[i][0])
+                incorrect_d_2.append(data[i][1])
+
+    plt.plot(correct_d_1, correct_d_2, 'go', incorrect_d_1, incorrect_d_2, 'ro')
+    plt.title('Accuracy: ' + str(accuracy) + '% | ' +
+              ' Dataset size: ' + str(sample_size) + ' | '
+              ' Number of Clusters: ' + str(cluster_count))
+    plt.show()

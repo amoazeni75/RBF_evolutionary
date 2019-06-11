@@ -44,7 +44,8 @@ class es_thread(threading.Thread):
                                              self.min_length_chromosome,
                                              self.max_length_chromosome,
                                              self.max_sigma_mutation,
-                                             self.thread_number)
+                                             self.thread_number,
+                                             self.algorithm_mode)
         # normalizing data
         if self.normal_data:
             sc = MinMaxScaler(feature_range=(0, 1))
