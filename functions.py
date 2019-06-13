@@ -142,8 +142,9 @@ def do_recombination(ch1, ch2):
     for i in range(len(lower_length)):
         new_child.append((higher_length[i] + lower_length[i]) / 2.0)
 
-    for i in range(len(lower_length), len(higher_length)):
-        new_child.append(higher_length[i])
+    if np.random.uniform(0, 1) >= 0.5:
+        for i in range(len(lower_length), len(higher_length)):
+            new_child.append(higher_length[i])
 
     return new_child
 
@@ -373,7 +374,8 @@ def draw_result_classification(y_out,
                                accuracy,
                                sample_size,
                                cluster_count,
-                               data):
+                               data,
+                               dataset_panda_v):
     correct_d_1 = []
     correct_d_2 = []
     incorrect_d_1 = []
@@ -395,9 +397,10 @@ def draw_result_classification(y_out,
                 incorrect_d_1.append(data[i][0])
                 incorrect_d_2.append(data[i][1])
 
-    plt.plot(correct_d_1, correct_d_2, 'go', incorrect_d_1, incorrect_d_2, 'ro')
-    plt.title('Accuracy: ' + str(accuracy) + '% | ' +
-              ' Dataset size: ' + str(sample_size) + ' | ' +
+    plt.plot(correct_d_1, correct_d_2, 'g.', linewidth=4)
+    plt.plot(incorrect_d_1, incorrect_d_2, 'r.', linewidth=2)
+    plt.title('asAccuracy: ' + str(accuracy) + '% | ' +
+              ' Data size: ' + str(sample_size) + ' | ' +
               ' Number of Clusters: ' + str(cluster_count))
     plt.legend(('correct', 'incorrect'), loc='upper right')
     plt.show()
@@ -407,11 +410,26 @@ def draw_result_regression(y_out,
                            y_star,
                            accuracy,
                            sample_size):
-    plt.plot(y_out, '-o', label='RBF-Net')
-    #plt.plot(y_star, '-o', label='Real')
+    plt.plot(y_star, '-o', label='real')
+    plt.plot(y_out, '-', label='RBF')
     plt.legend()
-    plt.title('Accuracy: ' + str(accuracy) + '% | ' +
-              ' Dataset size: ' + str(sample_size) + ' | ')
+    plt.title(' Dataset size: ' + str(sample_size) + ' | ' +
+              ' Accuracy: ' + str(accuracy))
 
     plt.tight_layout()
+    plt.show()
+
+
+def draw_centers(chromosome, dimensions):
+    ax = plt.gca()
+    for j in range(dimensions, len(chromosome) - 1, dimensions + 1):
+        r = float(chromosome[j])
+        c = []
+        for k in range(j - dimensions, j):
+            c.append(chromosome[k])
+
+        cc = plt.Circle(c, r, facecolor='none', edgecolor='black')
+        ax.add_patch(cc)
+        plt.axis('scaled')
+
     plt.show()

@@ -3,10 +3,8 @@ import pandas as pd
 import argparse
 import functions
 import es_core
-import matplotlib.pyplot as plt
 import numpy as np
 from time import time
-import generate_data as gd
 
 
 # running mode of Algorithm  = {Classification_2, Classification_n, Regression}
@@ -14,38 +12,41 @@ import generate_data as gd
 
 def get_argument():
     parser = argparse.ArgumentParser(
-        description='This Programme try to train an RBF Network with the help of ES Algorithm')
+        description='This Programme will try to train an RBF Network with the help of ES Algorithm\n'
+                    'License : S.Alireza Moazeni')
 
     parser.add_argument('--train',
-                        help='Path of train data',
-                        default="regdata2000.xlsx")
+                        help='The path of training dataset',
+                        default="5clstrain1500.xlsx")
     parser.add_argument('--test',
-                        help='Path of test data',
-                        default="none")
+                        help='The path of test set, There is no need to enter anything for'
+                             ' this option if you donn\'t have test set',
+                        default="5clstest5000.xlsx")
     parser.add_argument('--cminlcr',
-                        help='Minimum Number of Basis',
+                        help='Minimum number of basis',
                         default="5")
     parser.add_argument('--cmaxlcr',
-                        help='Maximum Number of Basis',
+                        help='Maximum number of basis',
                         default="15")
     parser.add_argument('--init_ch_nu',
-                        help='Initial Size of Generation',
+                        help='Initial size of generation',
                         default="30")
     parser.add_argument('--cmaxs',
-                        help='Maximum Ratio of Sigma',
+                        help='Maximum ratio for mutation rate',
                         default="0.1")
     parser.add_argument('--reg_thr',
-                        help='threshold that indicate running mode',
+                        help='threshold that use for recognizing running mode of algorithm(classification 2d or'
+                             'classification nd or regression)',
                         default="0.4")
     parser.add_argument('--q',
-                        help='q in q-tornument',
+                        help='q in q-tournament',
                         default="3")
     parser.add_argument('--threads',
                         help='number of running threads',
                         default="1")
     parser.add_argument('--iterations',
                         help='number of iterations in ES',
-                        default="5")
+                        default="15")
 
     args = parser.parse_args()
     args.cminlcr = int(args.cminlcr)
@@ -91,6 +92,84 @@ def get_dataset(address_train, address_test):
            dataset_test_length, \
            data_test_dimension, \
            y_star_test
+
+
+def prepare_report(all_result,
+                   algorithm_mode,
+                   y_star,
+                   y_star_test,
+                   dataset_length,
+                   number_of_class,
+                   dataset_train_values,
+                   dataset_train,
+                   start_time,
+                   end_time,
+                   dataset_test_length,
+                   dataset_test_values,
+                   dataset_test,
+                   data_dimension):
+    best_res = all_result[0]
+    best_res_fit = all_result[0][1]
+    for i in range(1, len(all_result)):
+        if all_result[i][1] > best_res_fit:
+            best_res_fit = all_result[i][1]
+            best_res = all_result[i]
+
+    print("######################### Result Report")
+    # best_res[0] = y;  best_res[1] = fitness value;    best_res[2] = chromosome
+    # best_res[3] = weight;     best_res[4] = g_matrix
+    if algorithm_mode == "Classification_n":
+        for i in range(len(best_res[0])):
+            best_res[0][i] = np.round(best_res[0][i])
+
+    print("The program was implemented in " + algorithm_mode + " mode")
+    if algorithm_mode == "Classification_2" or algorithm_mode == "Classification_n":
+        print("Learning Accuracy : " + str(best_res_fit * 100))
+        print("Learning Error : " + str((1 - best_res_fit) * 100))
+        functions.draw_result_classification(best_res[0],
+                                             y_star,
+                                             best_res_fit * 100,
+                                             dataset_length,
+                                             number_of_class,
+                                             dataset_train_values,
+                                             dataset_train)
+
+    elif algorithm_mode == "Regression":
+        functions.draw_result_regression(best_res[0],
+                                         y_star,
+                                         100 - ((1 / best_res_fit) * 100)[0][0],
+                                         dataset_length)
+        print("Learning Error : " + str(((1 / best_res_fit) * 100)[0][0]) + "%")
+
+    print("Number of best basis")
+    print(str((len(best_res[2]) - 1) / (data_dimension + 1)))
+
+    print("Algorithm Time : " + '%.2f' % (end_time - start_time) + "s")
+
+    print("#####################comapre result in classification")
+    if dataset_test_length != -1:
+        list_evaluated_test, \
+        list_w_matrices, \
+        list_y_matrices, \
+        list_g_matrices = functions.evaluate_generation(dataset_test_values,
+                                                        [best_res[2]],
+                                                        y_star_test,
+                                                        algorithm_mode)
+        if algorithm_mode == "Regression":
+            functions.draw_result_regression(y_out=list_y_matrices[0],
+                                             y_star=y_star_test,
+                                             accuracy=100 - ((1 / list_evaluated_test[0][1]) * 100)[0][0],
+                                             sample_size=dataset_test_length)
+        else:
+            functions.draw_result_classification(y_out=list_y_matrices[0],
+                                                 y_star=y_star_test,
+                                                 accuracy=list_evaluated_test[0][1] * 100,
+                                                 sample_size=dataset_test_length,
+                                                 cluster_count=number_of_class,
+                                                 data=dataset_test_values,
+                                                 dataset_panda_v=dataset_test)
+
+    functions.draw_centers(list_evaluated_test[0][0], data_dimension)
 
 
 def main():
@@ -151,70 +230,22 @@ def main():
         my_threads[i].join()
 
     end_time = time()
-    best_res = all_result[0]
-    best_res_fit = all_result[0][1]
-    for i in range(1, len(all_result)):
-        if all_result[i][1] > best_res_fit:
-            best_res_fit = all_result[i][1]
-            best_res = all_result[i]
 
-    print("######################### Result Report")
-    # best_res[0] = y;  best_res[1] = fitness value;    best_res[2] = chromosome
-    # best_res[3] = weight;     best_res[4] = g_matrix
-    if algorithm_mode == "Classification_n":
-        for i in range(len(best_res[0])):
-            best_res[0][i] = np.round(best_res[0][i])
-
-    print("The program was implemented in " + algorithm_mode + " mode")
-    if algorithm_mode == "Classification_2" or algorithm_mode == "Classification_n":
-        print("best fitness : " + str(best_res_fit))
-        print("Learning Error : " + str((1 - best_res_fit) * 100))
-        functions.draw_result_classification(best_res[0],
-                                             y_star,
-                                             best_res_fit * 100,
-                                             dataset_length,
-                                             number_of_class,
-                                             dataset_train_values)
-    elif algorithm_mode == "Regression":
-        functions.draw_result_regression(best_res[0],
-                                         y_star,
-                                         100 - ((1 / best_res_fit) * 100)[0][0],
-                                         dataset_length)
-        print("Learning Error : " + str(((1 / best_res_fit) * 100)[0][0]) + "%")
-
-    print("best chromosome with highest fitness :")
-    print(np.array(best_res[2]).reshape(len(best_res[2]), 1))
-
-    print("weights:")
-    print(best_res[3])
-
-    print("G Matrix :")
-    print(np.array(best_res[4]).reshape(len(best_res[4]), len(best_res[4][0])))
-
-    print("Algorithm Time : " + '%.2f' % (end_time - start_time) + "s")
-
-    print("#####################comapre result in classification")
-    if dataset_test_length != -1:
-        list_evaluated_test, \
-        list_w_matrices, \
-        list_y_matrices, \
-        list_g_matrices = functions.evaluate_generation(dataset_test_values,
-                                                        [best_res[2]],
-                                                        y_star_test,
-                                                        algorithm_mode)
-        print("Accuracy in Test Set is: " + str(list_evaluated_test[0][1] * 100))
-        print("class labels: ")
-        if algorithm_mode == "Classification_n":
-            for i in range(len(list_y_matrices)):
-                list_y_matrices[i] = np.round(list_y_matrices[i])
-        print(str(list_y_matrices))
-
-        functions.draw_result_classification(list_y_matrices[0],
-                                             y_star_test,
-                                             list_evaluated_test[0][1] * 100,
-                                             dataset_test_length,
-                                             number_of_class,
-                                             dataset_test_values)
+    prepare_report(
+        all_result=all_result,
+        algorithm_mode=algorithm_mode,
+        y_star=y_star,
+        y_star_test=y_star_test,
+        dataset_length=dataset_length,
+        number_of_class=number_of_class,
+        dataset_train_values=dataset_train_values,
+        dataset_train=dataset_train,
+        start_time=start_time,
+        end_time=end_time,
+        dataset_test_length=dataset_test_length,
+        dataset_test_values=dataset_test_values,
+        dataset_test=dataset_test,
+        data_dimension=data_dimension)
 
 
 if __name__ == '__main__':
